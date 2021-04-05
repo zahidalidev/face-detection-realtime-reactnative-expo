@@ -28,6 +28,8 @@ export default class App extends React.Component {
 
   async componentWillMount() {
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
+    await Permissions.askAsync(Permissions.AUDIO_RECORDING);
+    // await Permissions.askAsync(Permissions.MOTION);
     this.setState({ hasCameraPermission: status === 'granted' });
   }
 
@@ -148,25 +150,29 @@ export default class App extends React.Component {
   handleFaceDetectionError = () => {
     //
   }
-  handleFacesDetected = ({ faces }) => {
+  handleFacesDetected = async ({ faces }) => {
     if (faces.length === 1) {
       this.setState({
         faceDetected: true,
       });
       if (!this.state.faceDetected && !this.state.countDownStarted) {
-        this.initCountDown();
+        await this.initCountDown();
       }
     } else {
       this.setState({ faceDetected: false });
       this.cancelCountDown();
     }
   }
-  initCountDown = () => {
+  initCountDown = async () => {
     this.setState({
       countDownStarted: true,
     });
+
     console.log("started")
     this.countDownTimer = setInterval(this.handleCountDownTime, 1000);
+    const res = await this.camera.recordAsync()
+    console.log("Video recored: ", res)
+
   }
 
   cancelCountDown = () => {
@@ -188,13 +194,15 @@ export default class App extends React.Component {
       this.takePicture();
     }
   }
+
   takePicture = () => {
     this.setState({
       pictureTaken: true,
     });
     if (this.camera) {
-      console.log('take picture');
-      this.camera.takePictureAsync({ onPictureSaved: this.onPictureSaved });
+      // this.camera.takePictureAsync({ onPictureSaved: this.onPictureSaved });
+      console.log('recording stopped');
+      this.camera.stopRecording()
     }
   }
   onPictureSaved = () => {
